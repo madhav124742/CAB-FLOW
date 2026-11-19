@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAB FLOW AI - Autonomous Fleet Intelligence & Dynamic Pricing Engine</title>
+  
+  <!-- Modern Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Chart.js for High Performance Telematics & Data Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #06080E;
+      --bg-surface: #0B0F19;
+      --card-bg: rgba(14, 20, 32, 0.75);
+      --card-border: rgba(38, 52, 78, 0.65);
+      --card-hover: rgba(22, 32, 52, 0.85);
+      
+      --accent-blue: #3B82F6;
+      --accent-cyan: #06B6D4;
+      --accent-indigo: #6366F1;
+      --accent-glow: rgba(59, 130, 246, 0.35);
+      
+      --emerald: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.3);
+      --amber: #F59E0B;
+      --rose: #EF4444;
+      --purple: #A855F7;
+      
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Ambient Dynamic Glowing Background Lights */
+    .glow-sphere-1 {
+      position: fixed;
+      width: 700px;
+      height: 700px;
+      top: -180px;
+      left: -180px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.16) 0%, rgba(6, 182, 212, 0.08) 45%, rgba(0,0,0,0) 70%);
+      filter: blur(90px);
+      z-index: -1;
+      pointer-events: none;
+      animation: floatOrb 15s ease-in-out infinite alternate;
+    }
+
+    .glow-sphere-2 {
+      position: fixed;
+      width: 800px;
+      height: 800px;
+      bottom: -220px;
+      right: -220px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(0,0,0,0) 70%);
+      filter: blur(100px);
+      z-index: -1;
+      pointer-events: none;
+      animation: floatOrb2 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(140px, 90px) scale(1.18); }
+    }
+
+    @keyframes floatOrb2 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-120px, -100px) scale(1.22); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Top Glass Navigation Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(6, 8, 14, 0.88);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #3B82F6, #06B6D4);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      color: #fff;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.5);
+      animation: brandPulse 3s infinite ease-in-out;
+    }
+
+    @keyframes brandPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(59, 130, 246, 0.45); }
+      50% { transform: scale(1.06); box-shadow: 0 0 30px rgba(6, 182, 212, 0.7); }
+    }
+
+    .brand-text {
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: #FFF;
+    }
+
+    .brand-text span {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      background: rgba(14, 20, 32, 0.8);
+      border: 1px solid var(--card-border);
+      padding: 4px;
+      border-radius: 14px;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: #FFF;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+    }
+
+    .nav-btn:hover:not(.active) {
+      color: #FFF;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Live Telematics Badge */
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--emerald);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: liveBlink 1.8s infinite ease-in-out;
+    }
+
+    @keyframes liveBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    /* Layout Container */
+    .app-container {
+      max-width: 1580px;
+      margin: 0 auto;
+      padding: 24px 28px 60px;
+    }
+
+    .view-content {
+      display: none;
+      animation: viewSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .view-content.active {
+      display: block;
+    }
+
+    @keyframes viewSlide {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout Grids */
+    .grid-booking {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 1080px) {
+      .grid-booking { grid-template-columns: 1fr; }
+    }
+
+    /* Advanced Glass Card */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(59, 130, 246, 0.45);
+    }
+
+    /* Typography */
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFF;
+    }
+
+    .section-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .form-select, .form-input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #FFF;
+      font-size: 0.94rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-select:focus, .form-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+      background: rgba(22, 32, 54, 0.95);
+    }
+
+    /* Environmental Radar Box */
+    .radar-box {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(6, 182, 212, 0.09));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .radar-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1.5px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.7), transparent);
+    }
+
+    .radar-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.16);
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    /* Vehicle Options */
+    .ride-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .ride-card {
+      background: rgba(18, 24, 38, 0.75);
+      border: 1.5px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .ride-card:hover {
+      background: rgba(26, 36, 56, 0.88);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .ride-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(37, 99, 235, 0.18);
+      box-shadow: 0 0 22px rgba(37, 99, 235, 0.28);
+    }
+
+    .ride-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .ride-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      color: #38BDF8;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .ride-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ride-seats {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      background: #1E293B;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .ride-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .ride-price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFF;
+      text-align: right;
+    }
+
+    .ride-eta {
+      font-size: 0.75rem;
+      color: var(--emerald);
+      text-align: right;
+      font-weight: 600;
+    }
+
+    /* Action Buttons */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: #FFF;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(37, 99, 235, 0.55);
+      background: linear-gradient(135deg, #3B82F6, #2563EB);
+    }
+
+    /* Leaflet Map */
+    #cab-map {
+      height: 480px;
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      z-index: 1;
+    }
+
+    /* Telematics HUD */
+    .hud-telematics-panel {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .hud-tile {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .hud-tile-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .hud-tile-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFF;
+      margin-top: 4px;
+    }
+
+    /* Dispatch modal / card */
+    .dispatch-card {
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 16px;
+      padding: 22px;
+      margin-top: 20px;
+      display: none;
+      animation: dispatchOpen 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    @keyframes dispatchOpen {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Stats Grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 26px;
+    }
+
+    @media (max-width: 960px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(59, 130, 246, 0.45);
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      height: 3px; width: 100%;
+      background: var(--accent-blue);
+    }
+
+    .stat-card.emerald::after { background: var(--emerald); }
+    .stat-card.amber::after { background: var(--amber); }
+    .stat-card.purple::after { background: var(--purple); }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #FFF;
+      margin-top: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .stat-trend {
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .trend-up { color: var(--emerald); }
+    .trend-down { color: var(--rose); }
+
+    /* Tables */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: rgba(13, 17, 26, 0.6);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: rgba(22, 28, 44, 0.8);
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.6px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .data-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(38, 48, 71, 0.4);
+      color: #E2E8F0;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .badge-high { background: rgba(239, 68, 68, 0.18); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-med { background: rgba(245, 158, 11, 0.18); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-low { background: rgba(16, 185, 129, 0.18); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* ML Module Grid */
+    .ml-section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 960px) {
+      .ml-section-grid { grid-template-columns: 1fr; }
+    }
+
+    .code-box {
+      background: #080A10;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      color: #93C5FD;
+      overflow-x: auto;
+      line-height: 1.55;
+    }
+
+    .module-pill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    /* Live Interactive Simulator Bar */
+    .live-sim-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+    }
+
+    .pulse-radar-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #38BDF8;
+      box-shadow: 0 0 12px #38BDF8;
+      animation: radarPulse 1.8s infinite linear;
+    }
+
+    @keyframes radarPulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    /* Live Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #131A29;
+      border: 1px solid #293854;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      border-radius: 14px;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 9999;
+      transform: translateY(140px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+    }
+
+    /* Interactive Live Simulation Controller Box */
+    .sim-ctrl-card {
+      background: rgba(11, 16, 27, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+
+    .sim-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .sim-slider {
+      flex: 1;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Dynamic Lighting -->
+  <div class="glow-sphere-1"></div>
+  <div class="glow-sphere-2"></div>
+
+  <!-- Top Glass Header -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <div class="brand-text">CAB <span>FLOW</span> AI</div>
+    </a>
+
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="switchTab('booking')">
+        <i class="fa-solid fa-car"></i> Smart Booking
+      </button>
+      <button class="nav-btn" onclick="switchTab('driver')">
+        <i class="fa-solid fa-radar"></i> Fleet Radar & Telematics
+      </button>
+      <button class="nav-btn" onclick="switchTab('analytics')">
+        <i class="fa-solid fa-chart-line"></i> Demand Hotspots
+      </button>
+      <button class="nav-btn" onclick="switchTab('simulator')">
+        <i class="fa-solid fa-sliders"></i> Surge Simulator
+      </button>
+      <button class="nav-btn" onclick="switchTab('ml-engine')">
+        <i class="fa-solid fa-brain"></i> ML Architecture
+      </button>
+    </div>
+
+    <div class="status-badge" id="api-status-pill">
+      <div class="status-dot"></div>
+      <span id="api-status-text">ML API: Port 8000 (Active)</span>
+    </div>
+  </header>
+
+  <div class="app-container">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: CUSTOMER SMART BOOKING & FARE PREDICTION -->
+    <!-- ========================================== -->
+    <div id="view-booking" class="view-content active">
+      <div class="grid-booking">
+        <!-- Left: Route & Ride Configurator -->
+        <div class="card">
+          <div class="section-title">
+            <i class="fa-solid fa-location-crosshairs" style="color: #38BDF8;"></i>
+            Book Smart Ride
+          </div>
+          <div class="section-subtitle">Real-time dynamic fare prediction calibrated with NCR dataset</div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Pickup Location</span>
+              <span style="color: #38BDF8; font-size: 0.72rem;"><i class="fa-solid fa-location-dot"></i> Live GPS</span>
+            </label>
+            <select id="pickup-select" class="form-select" onchange="calculateTrip()">
+              <option value="connaught">Connaught Place, Central Delhi</option>
+              <option value="airport">Indira Gandhi Intl Airport (DEL)</option>
+              <option value="cybercity" selected>Cyber City, DLF Phase 2, Gurugram</option>
+              <option value="noida">Noida Sector 18, Metro Hub</option>
+              <option value="hauzkhas">Hauz Khas Social, South Delhi</option>
+              <option value="railway">New Delhi Railway Station</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Drop-off Destination</span>
+              <span style="color: #EF4444; font-size: 0.72rem;"><i class="fa-solid fa-flag-checkered"></i> Target</span>
+            </label>
+            <select id="drop-select" class="form-select" onchange="calculateTrip()">
+              <option value="airport" selected>Indira Gandhi Intl Airport (DEL)</option>
+              <option value="connaught">Connaught Place, Central Delhi</option>
+              <option value="cybercity">Cyber City, DLF Phase 2, Gurugram</option>
+              <option value="noida">Noida Sector 18, Metro Hub</option>
+              <option value="hauzkhas">Hauz Khas Social, South Delhi</option>
+              <option value="railway">New Delhi Railway Station</option>
+            </select>
+          </div>
+
+          <!-- Environmental AI Radar -->
+          <div class="radar-box">
+            <div>
+              <span class="radar-tag">AI Route Telematics</span>
+              <div style="font-weight: 700; font-size: 0.95rem; margin-top: 4px;" id="traffic-text">
+                Traffic: <span style="color: #F59E0B;">Heavy Traffic (Peak Hours)</span>
+              </div>
+              <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 2px;" id="weather-text">
+                Weather: 🌧️ Rain Showers (24°C)
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Active Surge</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #F59E0B;" id="surge-val">1.62x</div>
+            </div>
+          </div>
+
+          <!-- Vehicle Tier Options -->
+          <label class="form-label">Select Vehicle Category</label>
+          <div class="ride-options">
+            <!-- Flow Go -->
+            <div class="ride-card selected" onclick="selectTier(this, 'Flow Go', 14.0, 45.0, 'DL 1Y AB 7821', 'Maruti Suzuki Dzire', 'Vikram Singh', 4.90)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap"><i class="fa-solid fa-car-side"></i></div>
+                <div>
+                  <div class="ride-name">Flow Go <span class="ride-seats">👤 4 seats</span></div>
+                  <div class="ride-desc">Affordable, compact daily commute</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-go">₹280</div>
+                <div class="ride-eta">2 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow Prime -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow Prime', 18.5, 60.0, 'DL 2C XY 4419', 'Honda City i-VTEC', 'Amit Sharma', 4.95)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #818CF8;"><i class="fa-solid fa-car"></i></div>
+                <div>
+                  <div class="ride-name">Flow Prime <span class="ride-seats">👤 4 seats</span></div>
+                  <div class="ride-desc">Top-rated sedans & extra legroom</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-prime">₹370</div>
+                <div class="ride-eta">4 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow XL -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow XL', 25.0, 90.0, 'HR 26 DR 9012', 'Toyota Innova Crysta', 'Gurpreet Singh', 4.88)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #34D399;"><i class="fa-solid fa-van-shuttle"></i></div>
+                <div>
+                  <div class="ride-name">Flow XL <span class="ride-seats">👤 6 seats</span></div>
+                  <div class="ride-desc">Spacious SUVs for luggage & groups</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-xl">₹495</div>
+                <div class="ride-eta">6 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow Auto -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow Auto', 9.5, 30.0, 'DL 1R B 3302', 'Bajaj Maxima CNG', 'Rajesh Gupta', 4.75)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #FBBF24;"><i class="fa-solid fa-motorcycle"></i></div>
+                <div>
+                  <div class="ride-name">Flow Auto <span class="ride-seats">👤 3 seats</span></div>
+                  <div class="ride-desc">Quick doorstep auto-rickshaws</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-auto">₹190</div>
+                <div class="ride-eta">1 min away</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Book Button -->
+          <button class="btn-primary" onclick="confirmBooking()">
+            <i class="fa-solid fa-bolt"></i>
+            <span id="btn-text">Confirm Booking • Flow Go</span>
+          </button>
+
+          <!-- Driver Dispatch Confirmation Banner -->
+          <div id="dispatch-banner" class="dispatch-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--emerald); font-weight: 800; font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-check"></i> CAB CONFIRMED & DISPATCHED
+              </span>
+              <span style="font-size: 0.85rem; color: #A5B4FC; font-weight: 700;">ARRIVING IN 3 MINS</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+              <div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #FFF;" id="disp-driver">Vikram Singh</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);" id="disp-rating">★ 4.90 • 4,820 trips</div>
+                <div style="font-size: 0.85rem; color: #38BDF8; font-weight: 600; margin-top: 3px;" id="disp-car">Maruti Suzuki Dzire • DL 1Y AB 7821</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.72rem; color: var(--text-dim); font-weight: 700;">START PIN</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #FFF; letter-spacing: 2px;">4819</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Live Interactive Map & Route Summary -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div class="card" style="padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+              <div>
+                <span style="font-size: 1.05rem; font-weight: 700;">Live Route Telematics & Fleet Grid</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;" id="route-dist-meta">11.2 km • ~24 mins</span>
+              </div>
+              <div class="status-badge" style="padding: 4px 12px; font-size: 0.75rem;">
+                <i class="fa-solid fa-satellite-dish"></i> GPS Tracking Live
+              </div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div id="cab-map"></div>
+
+            <!-- Route Metrics Bar -->
+            <div class="hud-telematics-panel">
+              <div class="hud-tile">
+                <div class="hud-tile-label">Trip Distance</div>
+                <div class="hud-tile-val" id="summary-distance">11.2 km</div>
+              </div>
+              <div class="hud-tile">
+                <div class="hud-tile-label">Est. Duration</div>
+                <div class="hud-tile-val" id="summary-duration">24 mins</div>
+              </div>
+              <div class="hud-tile">
+                <div class="hud-tile-label">Predicted Fare</div>
+                <div class="hud-tile-val" style="color: #38BDF8;" id="summary-fare">₹280</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ML Live Prediction Diagnostics -->
+          <div class="card" style="padding: 18px 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-dim);">Live ML Cancellation Risk Score</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: var(--emerald); margin-top: 4px;" id="ml-risk-badge">
+                  <i class="fa-solid fa-shield-halved"></i> Low Churn Risk (12.4% Probability)
+                </div>
+              </div>
+              <button onclick="rebalanceFleet()" class="nav-btn" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <i class="fa-solid fa-arrows-rotate"></i> Ping Nearest Driver
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: DRIVER & FLEET TELEMATICS RADAR -->
+    <!-- ========================================== -->
+    <div id="view-driver" class="view-content">
+      <div class="live-sim-bar">
+        <div class="pulse-radar-dot"></div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: #FFF;">Delhi NCR Live Telematics Engine: Active Dispatching</div>
+        <div style="margin-left: auto; font-size: 0.85rem; color: var(--text-muted);">
+          <span>Active Fleet: <strong style="color: #38BDF8;" id="fleet-cabs-val">4,280 Cabs</strong></span> •
+          <span>Avg Wait (VTAT): <strong style="color: var(--emerald);" id="fleet-vtat-val">8.4 mins</strong></span>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Active Drivers Online</div>
+          <div class="stat-value" id="card-drivers-val">4,280</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +14.2% peak surge</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="stat-label">Trip Completion Rate</div>
+          <div class="stat-value">91.8%</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-check"></i> High stability</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Avg Pickup Wait (VTAT)</div>
+          <div class="stat-value" id="card-vtat-val">8.4 mins</div>
+          <div class="stat-trend trend-down"><i class="fa-solid fa-clock"></i> NCR city median</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">High-Risk Churn Queue</div>
+          <div class="stat-value">18 Rides</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-shield-virus"></i> Auto-rebalanced</div>
+        </div>
+      </div>
+
+      <!-- Live Dispatch Queue Table -->
+      <div class="card">
+        <div class="section-title">
+          <i class="fa-solid fa-table-list" style="color: #818CF8;"></i>
+          Live Real-time Booking Telematics Feed
+        </div>
+        <div class="section-subtitle">Real-time ride requests streaming with predicted cancellation risk levels</div>
+
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Passenger</th>
+                <th>Vehicle Class</th>
+                <th>Pickup Sector</th>
+                <th>ETA (VTAT)</th>
+                <th>Fare Amount</th>
+                <th>Risk Probability</th>
+                <th>Risk Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CNR-8494506</strong></td>
+                <td>Rohit Sen</td>
+                <td>Auto</td>
+                <td>Khandsa</td>
+                <td>13.4 mins</td>
+                <td>₹627.00</td>
+                <td><span class="badge badge-low">12.4% Low</span></td>
+                <td><button onclick="dispatchCabs('Khandsa')" class="nav-btn" style="padding: 4px 10px; font-size: 0.75rem;"><i class="fa-solid fa-bolt"></i> Rebalance</button></td>
+              </tr>
+              <tr>
+                <td><strong>CNR-5884300</strong></td>
+                <td>Neha Verma</td>
+                <td>Premier Sedan</td>
+                <td>Palam Vihar</td>
+                <td>18.2 mins</td>
+                <td>₹416.00</td>
+                <td><span class="badge badge-high">68.5% High</span></td>
+                <td><button onclick="dispatchCabs('Palam Vihar')" class="nav-btn" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); color: #F87171;"><i class="fa-solid fa-triangle-exclamation"></i> Re-assign</button></td>
+              </tr>
+              <tr>
+                <td><strong>CNR-1326809</strong></td>
+                <td>Arjun Batra</td>
+                <td>Go Sedan</td>
+                <td>Shastri Nagar</td>
+                <td>4.9 mins</td>
+                <td>₹237.00</td>
+                <td><span class="badge badge-low">8.2% Low</span></td>
+                <td><button onclick="dispatchCabs('Shastri Nagar')" class="nav-btn" style="padding: 4px 10px; font-size: 0.75rem;"><i class="fa-solid fa-bolt"></i> Standby</button></td>
+              </tr>
+              <tr>
+                <td><strong>CNR-9204118</strong></td>
+                <td>Pooja Nair</td>
+                <td>Uber XL</td>
+                <td>IGI Airport T3</td>
+                <td>7.2 mins</td>
+                <td>₹836.00</td>
+                <td><span class="badge badge-med">34.1% Med</span></td>
+                <td><button onclick="dispatchCabs('IGI Airport')" class="nav-btn" style="padding: 4px 10px; font-size: 0.75rem;"><i class="fa-solid fa-bolt"></i> Dispatch</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: DEMAND ANALYTICS & HOTSPOT CHARTS -->
+    <!-- ========================================== -->
+    <div id="view-analytics" class="view-content">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Realized Bookings</div>
+          <div class="stat-value">150,000</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-database"></i> Full NCR Dataset</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="stat-label">Median Fare (Completed)</div>
+          <div class="stat-value">₹414.00</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> ₹655 on Weekends</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Optimal Cluster Density</div>
+          <div class="stat-value">K = 6</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-circle-nodes"></i> Silhouette Peak</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Supervised Class Accuracy</div>
+          <div class="stat-value">73.5%</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-microchip"></i> Random Forest</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px;">
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-chart-column" style="color: #38BDF8;"></i> Hourly Booking Volatility</div>
+          <div style="height: 280px;"><canvas id="chart-hourly"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-chart-line" style="color: #34D399;"></i> Realized vs ML Model Pricing Curve</div>
+          <div style="height: 280px;"><canvas id="chart-regression"></canvas></div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-bullseye" style="color: #A855F7;"></i> Classifier Benchmarking Radar</div>
+          <div style="height: 280px;"><canvas id="chart-models"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-pie-chart" style="color: #FBBF24;"></i> Hotspot Spatial Cluster Distribution</div>
+          <div style="height: 280px;"><canvas id="chart-clusters"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: INTERACTIVE DYNAMIC SURGE SIMULATOR -->
+    <!-- ========================================== -->
+    <div id="view-simulator" class="view-content">
+      <div class="card">
+        <div class="section-title">
+          <i class="fa-solid fa-sliders" style="color: #38BDF8;"></i>
+          Live Interactive Pricing & Surge Simulation Sandbox
+        </div>
+        <div class="section-subtitle">
+          Test real-time predictions by varying trip distance, pickup latency (VTAT), vehicle class, and weekend demand factors.
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+          <!-- Controls -->
+          <div>
+            <div class="form-group">
+              <label class="form-label">
+                <span>Trip Distance</span>
+                <span id="sim-dist-val" style="color: #38BDF8; font-weight: 700;">18.5 km</span>
+              </label>
+              <input type="range" min="1" max="50" step="0.5" value="18.5" class="sim-slider" id="sim-dist" oninput="updateSim()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Driver Arrival Latency (Avg VTAT)</span>
+                <span id="sim-vtat-val" style="color: #F59E0B; font-weight: 700;">8.5 mins</span>
+              </label>
+              <input type="range" min="2" max="25" step="0.5" value="8.5" class="sim-slider" id="sim-vtat" oninput="updateSim()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Vehicle Class</label>
+              <select id="sim-vehicle" class="form-select" onchange="updateSim()">
+                <option value="Auto">Auto (Rickshaw)</option>
+                <option value="Bike">Bike (Single rider)</option>
+                <option value="Go Mini">Go Mini (Hatchback)</option>
+                <option value="Go Sedan" selected>Go Sedan (Comfort)</option>
+                <option value="Premier Sedan">Premier Sedan (Executive)</option>
+                <option value="Uber XL">Uber XL (6-Seater SUV)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Day of Travel</label>
+              <select id="sim-day" class="form-select" onchange="updateSim()">
+                <option value="0">Weekday (Standard Pricing)</option>
+                <option value="1">Weekend (1.35x Surge Active)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Live Output Preview -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--card-border); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-dim);">Live API Real-Time Estimation</div>
+              <div style="font-size: 2.5rem; font-weight: 800; color: #38BDF8; margin-top: 6px;" id="sim-result-fare">₹425.00</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="sim-result-meta">Ensemble ML Model Prediction</div>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: var(--text-muted); font-size: 0.88rem;">Cancellation Risk:</span>
+                <span id="sim-result-risk" style="font-weight: 700; color: var(--emerald);">12.4% (Low Risk)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: var(--text-muted); font-size: 0.88rem;">Trip Cluster Segment:</span>
+                <span id="sim-result-cluster" style="font-weight: 700; color: #818CF8;">Commuter Corridor</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted); font-size: 0.88rem;">Estimated Duration:</span>
+                <span id="sim-result-duration" style="font-weight: 700; color: #FFF;">~32 mins</span>
+              </div>
+            </div>
+
+            <button onclick="showToast('Simulated parameters pushed to live fleet telematics queue!')" class="btn-primary" style="margin-top: 20px; padding: 12px;">
+              <i class="fa-solid fa-paper-plane"></i> Apply to Telematics Simulator
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: MACHINE LEARNING ARCHITECTURE -->
+    <!-- ========================================== -->
+    <div id="view-ml-engine" class="view-content">
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="section-title">
+          <i class="fa-solid fa-network-wired" style="color: #38BDF8;"></i>
+          System ML Pipeline & Mathematical Foundations
+        </div>
+        <div class="section-subtitle">
+          Comprehensive multi-stage machine learning pipeline processing real NCR ride transactions.
+        </div>
+      </div>
+
+      <div class="ml-section-grid">
+        <!-- Module 1 -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">Section I: Foundations & EDA</span>
+          <div class="section-title" style="font-size: 1.15rem;">Statistical Taxonomy & Distributions</div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+            Ingests continuous telematics and discrete vehicle classes. Computes parametric descriptive measures (skewness, variance, kurtosis).
+          </p>
+          <div class="code-box">
+• Target: Booking Value (Mean: ₹508.30, Median: ₹414.00, Skew: 2.29)
+• Features: Ride Distance (km), Avg VTAT, Avg CTAT, Ratings
+• EDA Visualizations: ./plots/eda_1_distributions.png, eda_2_multivariate.png
+          </div>
+        </div>
+
+        <!-- Module 2 -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">Section II: Preprocessing & Fare Regression</span>
+          <div class="section-title" style="font-size: 1.15rem;">Dynamic Regression Models</div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+            IQR and Z-score outlier filtering, standard scaling, and polynomial degree-2 interaction modeling.
+          </p>
+          <div class="code-box">
+• Simple Linear Regression (Distance Only): R² = 0.0001
+• Multiple Linear Regression (All Features): R² = 0.0430, MAE = ₹269.12
+• Polynomial Degree-2 (Interaction): R² = 0.0440, MAE = ₹269.11
+• Random Forest Regressor (Ensemble): R² = 0.0391
+          </div>
+        </div>
+
+        <!-- Module 3 -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(168, 85, 247, 0.15); color: #C084FC;">Section III: Classification & Cancellation Risk</span>
+          <div class="section-title" style="font-size: 1.15rem;">Ride Cancellation Churn Benchmarking</div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+            Evaluates passenger and driver cancellation risk based on arrival latency (VTAT), vehicle classes, and time slots.
+          </p>
+          <div class="code-box">
+• Random Forest Classifier: Accuracy = 73.49%, Precision = 1.0000
+• Decision Tree (Entropy / Information Gain): Accuracy = 73.49%, ROC-AUC = 0.6774
+• K-Nearest Neighbors (KNN k=7): Accuracy = 69.25%, F1 = 0.3071
+          </div>
+        </div>
+
+        <!-- Module 4 -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">Section IV: Spatial Clustering & PCA</span>
+          <div class="section-title" style="font-size: 1.15rem;">Unsupervised Density & Dimensionality</div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+            Partitional K-Means, Agglomerative Hierarchical Ward linkage, DBSCAN anomaly identification, and PCA 2D projections.
+          </p>
+          <div class="code-box">
+• K-Means: Optimal K = 6 (Silhouette Score = 0.1739)
+• DBSCAN: 2 dense clusters + 1,047 noise points detected
+• PCA: 2 orthogonal components retain 41.26% total variance
+• HMM Sequence: {Idle: 0.60, Cruising: 0.50, On-Trip: 0.75}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real-time Toast Notification -->
+  <div id="toast" class="toast">
+    <i class="fa-solid fa-circle-check" style="color: var(--emerald); font-size: 1.3rem;"></i>
+    <span id="toast-msg">Booking confirmed successfully!</span>
+  </div>
+
+  <script>
+    // Tab Navigation Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      
+      const targetView = document.getElementById('view-' + tabId);
+      if (targetView) targetView.classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId === 'booking' && map) {
+        setTimeout(() => map.invalidateSize(), 150);
+      }
+      if (tabId === 'analytics') {
+        initCharts();
+      }
+      if (tabId === 'simulator') {
+        updateSim();
+      }
+    }
+
+    // Coordinates for Delhi NCR Hubs
+    const locations = {
+      connaught: { name: "Connaught Place, Central Delhi", coords: [28.6315, 77.2167] },
+      airport: { name: "Indira Gandhi Intl Airport (DEL)", coords: [28.5562, 77.1000] },
+      cybercity: { name: "Cyber City, DLF Phase 2, Gurugram", coords: [28.4952, 77.0892] },
+      noida: { name: "Noida Sector 18, Metro Hub", coords: [28.5708, 77.3261] },
+      hauzkhas: { name: "Hauz Khas Social, South Delhi", coords: [28.5494, 77.2001] },
+      railway: { name: "New Delhi Railway Station", coords: [28.6429, 77.2195] }
+    };
+
+    // Distances Matrix in KM
+    const distanceTable = {
+      "connaught-airport": 14.5, "airport-connaught": 14.5,
+      "connaught-cybercity": 26.0, "cybercity-connaught": 26.0,
+      "cybercity-airport": 11.2, "airport-cybercity": 11.2,
+      "noida-connaught": 16.8, "connaught-noida": 16.8,
+      "hauzkhas-cybercity": 18.2, "cybercity-hauzkhas": 18.2,
+      "noida-airport": 31.4, "airport-noida": 31.4,
+      "railway-airport": 15.8, "airport-railway": 15.8
+    };
+
+    let selectedVehicle = {
+      name: "Flow Go",
+      rateKm: 14.0,
+      baseFare: 45.0,
+      plate: "DL 1Y AB 7821",
+      model: "Maruti Suzuki Dzire",
+      driver: "Vikram Singh",
+      rating: 4.90
+    };
+
+    let currentSurge = 1.62;
+    let currentDistance = 11.2;
+    let currentDuration = 24;
+
+    // Initialize Leaflet Map
+    let map = L.map('cab-map', { zoomControl: false }).setView([28.5200, 77.1200], 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    let routePolyline = null;
+    let pickupMarker = null;
+    let dropMarker = null;
+    let cabMarkers = [];
+
+    // Custom Icon Creators
+    function createMapPin(iconClass, color) {
+      return L.divIcon({
+        className: 'custom-pin',
+        html: `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFF; box-shadow: 0 0 12px ${color}; font-size: 15px;"><i class="${iconClass}"></i></div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+    }
+
+    // Spawn animated floating simulated cabs
+    function seedSimulatedCabs() {
+      cabMarkers.forEach(m => map.removeLayer(m));
+      cabMarkers = [];
+      const cabSpots = [
+        [28.501, 77.085], [28.490, 77.098], [28.540, 77.110], 
+        [28.565, 77.090], [28.625, 77.210], [28.580, 77.310]
+      ];
+      cabSpots.forEach(pt => {
+        const cabIcon = L.divIcon({
+          className: 'cab-icon',
+          html: `<div style="background: #1E293B; border: 1.5px solid #38BDF8; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #38BDF8; font-size: 12px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);"><i class="fa-solid fa-car"></i></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        const marker = L.marker(pt, { icon: cabIcon }).addTo(map);
+        cabMarkers.push(marker);
+      });
+    }
+
+    // Calculate Trip & Query API
+    function calculateTrip() {
+      const pKey = document.getElementById('pickup-select').value;
+      const dKey = document.getElementById('drop-select').value;
+      
+      const pLoc = locations[pKey];
+      const dLoc = locations[dKey];
+
+      let key = `${pKey}-${dKey}`;
+      let dist = distanceTable[key] || 12.5;
+      if (pKey === dKey) dist = 2.4;
+
+      currentDistance = dist;
+
+      // Telematics heuristic
+      let speed = 26.0;
+      let trafficName = "Heavy Traffic (Peak Hours)";
+      let trafficColor = "#F59E0B";
+      let surge = 1.45;
+      
+      if (pKey === 'cybercity' || dKey === 'cybercity') {
+        trafficName = "Congested (Cyber City Rush)";
+        trafficColor = "#EF4444";
+        speed = 18.0;
+        surge = 1.68;
+      } else if (pKey === 'airport' || dKey === 'airport') {
+        trafficName = "Moderate Airport Corridor";
+        trafficColor = "#3B82F6";
+        speed = 34.0;
+        surge = 1.35;
+      }
+
+      currentDuration = Math.round((dist / speed) * 60) + 4;
+      currentSurge = surge;
+
+      // Update Environmental Radar UI
+      document.getElementById('traffic-text').innerHTML = `Traffic: <span style="color: ${trafficColor};">${trafficName}</span>`;
+      document.getElementById('surge-val').innerText = `${surge.toFixed(2)}x`;
+      
+      // Update Rates for Tiers
+      const tiers = [
+        { id: 'price-go', base: 45, kmRate: 14.0 },
+        { id: 'price-prime', base: 60, kmRate: 18.5 },
+        { id: 'price-xl', base: 90, kmRate: 25.0 },
+        { id: 'price-auto', base: 30, kmRate: 9.5 },
+      ];
+
+      tiers.forEach(t => {
+        let fare = (t.base + (dist * t.kmRate) + (currentDuration * 1.5)) * surge;
+        document.getElementById(t.id).innerText = '₹' + Math.round(fare);
+      });
+
+      // Update Summary Info
+      document.getElementById('summary-distance').innerText = dist + " km";
+      document.getElementById('summary-duration').innerText = currentDuration + " mins";
+      document.getElementById('route-dist-meta').innerText = `${dist} km • ~${currentDuration} mins`;
+
+      let activeFare = (selectedVehicle.baseFare + (dist * selectedVehicle.rateKm) + (currentDuration * 1.5)) * surge;
+      document.getElementById('summary-fare').innerText = '₹' + Math.round(activeFare);
+      document.getElementById('btn-text').innerText = `Confirm Booking • ${selectedVehicle.name} (₹${Math.round(activeFare)})`;
+
+      // Query Live FastAPI REST API for ML Fare Prediction
+      fetch('http://localhost:8000/api/predict/fare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ride_distance: dist,
+          vehicle_type: selectedVehicle.name === 'Flow Auto' ? 'Auto' :
+                        selectedVehicle.name === 'Flow XL' ? 'Uber XL' :
+                        selectedVehicle.name === 'Flow Prime' ? 'Premier Sedan' : 'Go Mini',
+          avg_vtat: 8.5
+        })
+      })
+      .then(res => res.json())
+      .then(apiData => {
+        if (apiData && apiData.estimated_fare_inr) {
+          const apiFare = Math.round(apiData.estimated_fare_inr);
+          document.getElementById('summary-fare').innerText = '₹' + apiFare;
+          document.getElementById('btn-text').innerText = `Confirm Booking • ${selectedVehicle.name} (₹${apiFare} • ML API)`;
+        }
+      })
+      .catch(err => {
+        console.log('Using client fallback formula (API offline):', err);
+      });
+
+      // Query Live FastAPI for Cancellation Churn Risk
+      fetch('http://localhost:8000/api/predict/cancellation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          avg_vtat: 8.5,
+          vehicle_type: selectedVehicle.name === 'Flow Auto' ? 'Auto' : 'Go Mini'
+        })
+      })
+      .then(res => res.json())
+      .then(riskData => {
+        if (riskData && riskData.cancellation_probability !== undefined) {
+          const pct = (riskData.cancellation_probability * 100).toFixed(1);
+          const badge = document.getElementById('ml-risk-badge');
+          if (badge) {
+            badge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Churn Risk: ${riskData.cancellation_risk} (${pct}% Probability)`;
+            badge.style.color = riskData.cancellation_risk === 'High' ? 'var(--rose)' :
+                               riskData.cancellation_risk === 'Moderate' ? 'var(--amber)' : 'var(--emerald)';
+          }
+        }
+      })
+      .catch(() => {});
+
+      // Update Map Route & Pins
+      if (pickupMarker) map.removeLayer(pickupMarker);
+      if (dropMarker) map.removeLayer(dropMarker);
+      if (routePolyline) map.removeLayer(routePolyline);
+
+      pickupMarker = L.marker(pLoc.coords, { icon: createMapPin('fa-solid fa-location-dot', '#10B981') }).addTo(map).bindPopup(`<b>Pickup:</b> ${pLoc.name}`);
+      dropMarker = L.marker(dLoc.coords, { icon: createMapPin('fa-solid fa-flag-checkered', '#EF4444') }).addTo(map).bindPopup(`<b>Drop:</b> ${dLoc.name}`);
+
+      const mid = [
+        (pLoc.coords[0] + dLoc.coords[0]) / 2 + 0.015,
+        (pLoc.coords[1] + dLoc.coords[1]) / 2 - 0.012
+      ];
+
+      routePolyline = L.polyline([pLoc.coords, mid, dLoc.coords], {
+        color: '#38BDF8',
+        weight: 5,
+        opacity: 0.85,
+        dashArray: '8, 8'
+      }).addTo(map);
+
+      map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+    }
+
+    function selectTier(cardEl, name, rateKm, baseFare, plate, model, driver, rating) {
+      document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+      selectedVehicle = { name, rateKm, baseFare, plate, model, driver, rating };
+      calculateTrip();
+    }
+
+    function confirmBooking() {
+      const banner = document.getElementById('dispatch-banner');
+      banner.style.display = 'block';
+
+      document.getElementById('disp-driver').innerText = selectedVehicle.driver;
+      document.getElementById('disp-rating').innerText = `★ ${selectedVehicle.rating} • 4,820 trips completed`;
+      document.getElementById('disp-car').innerText = `${selectedVehicle.model} • ${selectedVehicle.plate}`;
+
+      showToast(`Driver ${selectedVehicle.driver} dispatched to your location!`);
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function rebalanceFleet() {
+      showToast('Live telemetry pinged: 3 nearest standby drivers notified!');
+    }
+
+    function dispatchCabs(sector) {
+      showToast(`Emergency fleet rebalancing: +25 Cabs appointed to ${sector}!`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3800);
+    }
+
+    // Dynamic Live Simulation Sandbox Logic
+    function updateSim() {
+      const dist = parseFloat(document.getElementById('sim-dist').value);
+      const vtat = parseFloat(document.getElementById('sim-vtat').value);
+      const vehicle = document.getElementById('sim-vehicle').value;
+      const isWeekend = parseInt(document.getElementById('sim-day').value);
+
+      document.getElementById('sim-dist-val').innerText = `${dist.toFixed(1)} km`;
+      document.getElementById('sim-vtat-val').innerText = `${vtat.toFixed(1)} mins`;
+
+      const estMins = Math.round((dist / 24.0) * 60) + 3;
+      document.getElementById('sim-result-duration').innerText = `~${estMins} mins`;
+
+      // Query Live API Fare & ML Prediction
+      fetch('http://localhost:8000/api/predict/fare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ride_distance: dist,
+          vehicle_type: vehicle,
+          avg_vtat: vtat,
+          is_weekend: isWeekend
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.estimated_fare_inr) {
+          document.getElementById('sim-result-fare').innerText = `₹${data.estimated_fare_inr.toFixed(2)}`;
+          const surgeTag = data.active_surge_multiplier > 1.0 ? ` (${data.active_surge_multiplier}x Surge Active)` : '';
+          document.getElementById('sim-result-meta').innerText = `Ensemble ML Prediction • Weekend factor${surgeTag}`;
+        }
+      })
+      .catch(() => {});
+
+      // Query Cancellation Risk
+      fetch('http://localhost:8000/api/predict/cancellation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          avg_vtat: vtat,
+          vehicle_type: vehicle,
+          is_weekend: isWeekend
+        })
+      })
+      .then(res => res.json())
+      .then(risk => {
+        if (risk && risk.cancellation_probability !== undefined) {
+          const pct = (risk.cancellation_probability * 100).toFixed(1);
+          const el = document.getElementById('sim-result-risk');
+          el.innerText = `${pct}% (${risk.cancellation_risk} Risk)`;
+          el.style.color = risk.cancellation_risk === 'High' ? 'var(--rose)' :
+                           risk.cancellation_risk === 'Moderate' ? 'var(--amber)' : 'var(--emerald)';
+        }
+      })
+      .catch(() => {});
+
+      // Query Cluster Segment
+      fetch('http://localhost:8000/api/predict/cluster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ride_distance: dist,
+          booking_value: dist * 22.0,
+          avg_vtat: vtat
+        })
+      })
+      .then(res => res.json())
+      .then(cl => {
+        if (cl && cl.cluster_profile) {
+          document.getElementById('sim-result-cluster').innerText = `${cl.cluster_profile} (Cluster #${cl.assigned_cluster})`;
+        }
+      })
+      .catch(() => {});
+    }
+
+    // Analytics Charts Initialization
+    let chartsInit = false;
+    function initCharts() {
+      if (chartsInit) return;
+      chartsInit = true;
+
+      // Chart 1: Hourly Demand
+      new Chart(document.getElementById('chart-hourly'), {
+        type: 'bar',
+        data: {
+          labels: ['00:00', '03:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+          datasets: [{
+            label: 'Trip Requests',
+            data: [120, 45, 190, 580, 890, 420, 390, 610, 980, 840, 390],
+            backgroundColor: '#3B82F6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: '#1E2538' }, ticks: { color: '#94A3B8' } },
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+          }
+        }
+      });
+
+      // Chart 2: Regression
+      new Chart(document.getElementById('chart-regression'), {
+        type: 'line',
+        data: {
+          labels: ['2km', '6km', '10km', '14km', '18km', '22km', '26km', '30km'],
+          datasets: [
+            {
+              label: 'Realized NCR Fares (₹)',
+              data: [80, 160, 240, 350, 480, 590, 720, 840],
+              borderColor: '#38BDF8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'ML Model Predicted Fit',
+              data: [75, 155, 235, 340, 470, 585, 710, 830],
+              borderColor: '#10B981',
+              borderDash: [5, 5],
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94A3B8' } } },
+          scales: {
+            y: { grid: { color: '#1E2538' }, ticks: { color: '#94A3B8' } },
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+          }
+        }
+      });
+
+      // Chart 3: Model Accuracy Radar
+      new Chart(document.getElementById('chart-models'), {
+        type: 'radar',
+        data: {
+          labels: ['Logistic Reg', 'KNN', 'Naive Bayes', 'Linear SVM', 'Decision Tree', 'Random Forest'],
+          datasets: [{
+            label: 'Accuracy (%)',
+            data: [70.9, 69.3, 69.6, 70.9, 73.5, 73.5],
+            backgroundColor: 'rgba(168, 85, 247, 0.2)',
+            borderColor: '#A855F7',
+            pointBackgroundColor: '#A855F7'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              angleLines: { color: '#1E2538' },
+              grid: { color: '#1E2538' },
+              pointLabels: { color: '#CBD5E1', font: { size: 11 } },
+              ticks: { display: false, min: 65 }
+            }
+          }
+        }
+      });
+
+      // Chart 4: Clusters Doughnut
+      new Chart(document.getElementById('chart-clusters'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Cyber City DLF', 'IGI Airport DEL', 'Connaught Place', 'Noida Hub', 'Hauz Khas', 'Railway Stn'],
+          datasets: [{
+            data: [28, 24, 18, 14, 9, 7],
+            backgroundColor: ['#3B82F6', '#06B6D4', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#CBD5E1', boxWidth: 12 } }
+          }
+        }
+      });
+    }
+
+    // Dynamic Live Telematics Polling from FastAPI
+    function pollLiveTelematics() {
+      fetch('http://localhost:8000/api/telematics/live')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.active_cabs_online) {
+            const formatted = Number(data.active_cabs_online).toLocaleString();
+            const el1 = document.getElementById('fleet-cabs-val');
+            const el2 = document.getElementById('card-drivers-val');
+            const el3 = document.getElementById('fleet-vtat-val');
+            const el4 = document.getElementById('card-vtat-val');
+            if (el1) el1.innerText = `${formatted} Cabs`;
+            if (el2) el2.innerText = formatted;
+            if (el3) el3.innerText = `${data.avg_vwat_mins} mins`;
+            if (el4) el4.innerText = `${data.avg_vwat_mins} mins`;
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Startup
+    window.addEventListener('load', () => {
+      seedSimulatedCabs();
+      calculateTrip();
+      setInterval(pollLiveTelematics, 6000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAB FLOW - AI Cab Demand & Dynamic Dispatch Platform</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS & JS for Interactive Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #090B10;
+      --card-bg: #11141C;
+      --card-border: #1F2432;
+      --card-hover: #181D29;
+      --accent: #2563EB;
+      --accent-glow: rgba(37, 99, 235, 0.35);
+      --emerald: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --amber: #F59E0B;
+      --rose: #EF4444;
+      --purple: #8B5CF6;
+      --cyan: #06B6D4;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --text-dim: #6B7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #252D3F;
+      border-radius: 4px;
+    }
+
+    /* Header Nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(9, 11, 16, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #2563EB, #06B6D4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #fff;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .brand-text {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #FFF;
+    }
+    .brand-text span {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-tabs {
+      display: flex;
+      background: #141824;
+      border: 1px solid var(--card-border);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #FFF;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+    .nav-btn:hover:not(.active) {
+      color: #FFF;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--emerald);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    .app-container {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 24px 28px 60px;
+    }
+
+    /* Views */
+    .view-content {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .view-content.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout Grids */
+    .grid-booking {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 28px;
+    }
+    @media (max-width: 1024px) {
+      .grid-booking {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Typography & Headers */
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .form-select, .form-input {
+      width: 100%;
+      background: #161A24;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #FFF;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .form-select:focus, .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Radar Box */
+    .radar-box {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(6, 182, 212, 0.08));
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .radar-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 3px 8px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    /* Ride Selector Cards */
+    .ride-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .ride-card {
+      background: #151923;
+      border: 1.5px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .ride-card:hover {
+      background: var(--card-hover);
+      border-color: #333D52;
+    }
+    .ride-card.selected {
+      border-color: var(--accent);
+      background: rgba(37, 99, 235, 0.14);
+      box-shadow: 0 0 16px rgba(37, 99, 235, 0.2);
+    }
+    .ride-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .ride-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #1C2230;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: #38BDF8;
+    }
+    .ride-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ride-seats {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      background: #202636;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .ride-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .ride-price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFF;
+      text-align: right;
+    }
+    .ride-eta {
+      font-size: 0.75rem;
+      color: var(--emerald);
+      text-align: right;
+      font-weight: 600;
+    }
+
+    /* Action Buttons */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: #FFF;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    /* Map container */
+    #cab-map {
+      height: 480px;
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      z-index: 1;
+    }
+
+    /* Dispatch modal / card */
+    .dispatch-card {
+      background: #141926;
+      border: 1px solid #232B3E;
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stats Grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+    @media (max-width: 900px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      background: var(--accent);
+    }
+    .stat-card.emerald::after { background: var(--emerald); }
+    .stat-card.amber::after { background: var(--amber); }
+    .stat-card.purple::after { background: var(--purple); }
+
+    .stat-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #FFF;
+      margin-top: 8px;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-trend {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .trend-up { color: var(--emerald); }
+    .trend-down { color: var(--rose); }
+
+    /* Tables */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: left;
+    }
+    .data-table th {
+      background: #161A26;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.74rem;
+      letter-spacing: 0.6px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #1A2030;
+      color: #E2E8F0;
+    }
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-high { background: rgba(239, 68, 68, 0.18); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-med { background: rgba(245, 158, 11, 0.18); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-low { background: rgba(16, 185, 129, 0.18); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-blue { background: rgba(37, 99, 235, 0.2); color: #60A5FA; border: 1px solid rgba(37, 99, 235, 0.35); }
+
+    /* ML Tabs & Accordion */
+    .ml-section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 960px) {
+      .ml-section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-box {
+      background: #0B0E14;
+      border: 1px solid #1C2333;
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #A5B4FC;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .module-pill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    /* Live Notification Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1E2538;
+      border: 1px solid #333F5E;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      transform: translateY(120px);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .toast.show {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <div class="brand-text">CAB <span>FLOW</span></div>
+    </a>
+
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="switchTab('booking')">
+        <i class="fa-solid fa-car"></i> Customer Booking
+      </button>
+      <button class="nav-btn" onclick="switchTab('driver')">
+        <i class="fa-solid fa-radar"></i> Driver & Fleet Radar
+      </button>
+      <button class="nav-btn" onclick="switchTab('analytics')">
+        <i class="fa-solid fa-chart-line"></i> Demand Analytics
+      </button>
+      <button class="nav-btn" onclick="switchTab('ml-engine')">
+        <i class="fa-solid fa-brain"></i> ML Architecture
+      </button>
+    </div>
+
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>ML Inference Engine: Active</span>
+    </div>
+  </header>
+
+  <div class="app-container">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: CUSTOMER SMART BOOKING & FARE PREDICTION -->
+    <!-- ========================================== -->
+    <div id="view-booking" class="view-content active">
+      <div class="grid-booking">
+        <!-- Left: Route & Ride Configurator -->
+        <div class="card">
+          <div class="section-title">
+            <i class="fa-solid fa-location-crosshairs" style="color: #38BDF8;"></i>
+            Book Smart Ride
+          </div>
+          <div class="section-subtitle">Real-time dynamic fare prediction & instant driver dispatch</div>
+
+          <div class="form-group">
+            <label class="form-label">Pickup Location</label>
+            <select id="pickup-select" class="form-select" onchange="calculateTrip()">
+              <option value="connaught">Connaught Place, Central Delhi</option>
+              <option value="airport">Indira Gandhi Intl Airport (DEL)</option>
+              <option value="cybercity" selected>Cyber City, DLF Phase 2, Gurugram</option>
+              <option value="noida">Noida Sector 18, Metro Hub</option>
+              <option value="hauzkhas">Hauz Khas Social, South Delhi</option>
+              <option value="railway">New Delhi Railway Station</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Drop-off Destination</label>
+            <select id="drop-select" class="form-select" onchange="calculateTrip()">
+              <option value="airport" selected>Indira Gandhi Intl Airport (DEL)</option>
+              <option value="connaught">Connaught Place, Central Delhi</option>
+              <option value="cybercity">Cyber City, DLF Phase 2, Gurugram</option>
+              <option value="noida">Noida Sector 18, Metro Hub</option>
+              <option value="hauzkhas">Hauz Khas Social, South Delhi</option>
+              <option value="railway">New Delhi Railway Station</option>
+            </select>
+          </div>
+
+          <!-- Environmental AI Radar -->
+          <div class="radar-box">
+            <div>
+              <span class="radar-tag">AI Route Telematics</span>
+              <div style="font-weight: 700; font-size: 0.95rem; margin-top: 4px;" id="traffic-text">
+                Traffic: <span style="color: #F59E0B;">Heavy Traffic (Peak Hours)</span>
+              </div>
+              <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 2px;" id="weather-text">
+                Weather: 🌧️ Rain Showers (24°C)
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Surge Multiplier</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #F59E0B;" id="surge-val">1.62x</div>
+            </div>
+          </div>
+
+          <!-- Vehicle Tier Options -->
+          <label class="form-label">Select Vehicle Category</label>
+          <div class="ride-options">
+            <!-- Flow Go -->
+            <div class="ride-card selected" onclick="selectTier(this, 'Flow Go', 14.0, 45.0, 'DL 1Y AB 7821', 'Maruti Suzuki Dzire', 'Vikram Singh', 4.9)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap"><i class="fa-solid fa-car-side"></i></div>
+                <div>
+                  <div class="ride-name">Flow Go <span class="ride-seats">👤 4 seats</span></div>
+                  <div class="ride-desc">Affordable, compact daily commute</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-go">₹280</div>
+                <div class="ride-eta">2 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow Prime -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow Prime', 18.5, 60.0, 'DL 2C XY 4419', 'Honda City i-VTEC', 'Amit Sharma', 4.95)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #818CF8;"><i class="fa-solid fa-car"></i></div>
+                <div>
+                  <div class="ride-name">Flow Prime <span class="ride-seats">👤 4 seats</span></div>
+                  <div class="ride-desc">Top-rated sedans & extra legroom</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-prime">₹370</div>
+                <div class="ride-eta">4 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow XL -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow XL', 25.0, 90.0, 'HR 26 DR 9012', 'Toyota Innova Crysta', 'Gurpreet Singh', 4.88)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #34D399;"><i class="fa-solid fa-van-shuttle"></i></div>
+                <div>
+                  <div class="ride-name">Flow XL <span class="ride-seats">👤 6 seats</span></div>
+                  <div class="ride-desc">Spacious SUVs for luggage & groups</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-xl">₹495</div>
+                <div class="ride-eta">6 mins away</div>
+              </div>
+            </div>
+
+            <!-- Flow Auto -->
+            <div class="ride-card" onclick="selectTier(this, 'Flow Auto', 9.5, 30.0, 'DL 1R B 3302', 'Bajaj Maxima CNG', 'Rajesh Gupta', 4.75)">
+              <div class="ride-left">
+                <div class="ride-icon-wrap" style="color: #FBBF24;"><i class="fa-solid fa-motorcycle"></i></div>
+                <div>
+                  <div class="ride-name">Flow Auto <span class="ride-seats">👤 3 seats</span></div>
+                  <div class="ride-desc">Quick doorstep auto-rickshaws</div>
+                </div>
+              </div>
+              <div>
+                <div class="ride-price" id="price-auto">₹190</div>
+                <div class="ride-eta">1 min away</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Book Button -->
+          <button class="btn-primary" onclick="confirmBooking()">
+            <i class="fa-solid fa-bolt"></i>
+            <span id="btn-text">Confirm Booking • Flow Go</span>
+          </button>
+
+          <!-- Driver Dispatch Confirmation Banner -->
+          <div id="dispatch-banner" class="dispatch-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--emerald); font-weight: 800; font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-check"></i> CAB CONFIRMED & APPOINTED
+              </span>
+              <span style="font-size: 0.85rem; color: #A5B4FC; font-weight: 700;">ARRIVING IN 3 MINS</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+              <div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #FFF;" id="disp-driver">Vikram Singh</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);" id="disp-rating">★ 4.92 • 4,820 trips</div>
+                <div style="font-size: 0.85rem; color: #38BDF8; font-weight: 600; margin-top: 3px;" id="disp-car">Maruti Suzuki Dzire • DL 1Y AB 7821</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.72rem; color: var(--text-dim); font-weight: 700;">START PIN</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #FFF; letter-spacing: 2px;">4819</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Live Interactive Map & Route Summary -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div class="card" style="padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+              <div>
+                <span style="font-size: 1.05rem; font-weight: 700;">Live Route Telematics Map</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;" id="route-dist-meta">11.2 km • ~24 mins</span>
+              </div>
+              <div class="status-badge" style="padding: 4px 10px; font-size: 0.75rem;">
+                <i class="fa-solid fa-satellite-dish"></i> GPS Tracking
+              </div>
+            </div>
+            <!-- Leaflet Map Container -->
+            <div id="cab-map"></div>
+          </div>
+
+          <!-- Trip Overview Breakdown -->
+          <div class="card" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 18px;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">ESTIMATED DISTANCE</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #FFF; margin-top: 4px;" id="summary-distance">11.2 km</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">TRANSIT TIME</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #FFF; margin-top: 4px;" id="summary-duration">24 mins</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">ESTIMATED FARE</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--emerald); margin-top: 4px;" id="summary-fare">₹280</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: DRIVER & FLEET RADAR DISPATCH VIEW -->
+    <!-- ========================================== -->
+    <div id="view-driver" class="view-content">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Active City Fleet</div>
+          <div class="stat-value">1,482 Cabs</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +12% during peak rush</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="stat-label">Pickup Demand Hotspots</div>
+          <div class="stat-value">6 Zones</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-location-dot"></i> Cyber City & DEL Airport highest</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Current Avg Surge Rate</div>
+          <div class="stat-value">1.48x</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-bolt"></i> +0.3x rain surcharge applied</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Avg Pickup ETA</div>
+          <div class="stat-value">3.2 Mins</div>
+          <div class="stat-trend trend-down"><i class="fa-solid fa-check"></i> Optimized via K-Means clusters</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <!-- Area Demand Table & Dispatch Re-routing -->
+        <div class="card">
+          <div class="section-title">
+            <i class="fa-solid fa-fire" style="color: #EF4444;"></i>
+            Real-Time Sector Demand & Cab Appointment
+          </div>
+          <div class="section-subtitle">Live density analysis predicting where drivers are needed right now</div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Urban Sector</th>
+                  <th>Demand Level</th>
+                  <th>Assigned Fleet</th>
+                  <th>Surge</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Cyber City, Gurugram</strong></td>
+                  <td><span class="badge badge-high">Extreme (94%)</span></td>
+                  <td>284 Cabs</td>
+                  <td>1.85x</td>
+                  <td><button class="badge badge-blue" style="cursor: pointer; border: none;" onclick="dispatchCabs('Cyber City')">Dispatch +30 Cabs</button></td>
+                </tr>
+                <tr>
+                  <td><strong>IGI Airport Terminal 3</strong></td>
+                  <td><span class="badge badge-high">High (88%)</span></td>
+                  <td>340 Cabs</td>
+                  <td>1.60x</td>
+                  <td><button class="badge badge-blue" style="cursor: pointer; border: none;" onclick="dispatchCabs('IGI Airport')">Dispatch +20 Cabs</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Connaught Place Hub</strong></td>
+                  <td><span class="badge badge-med">Medium (65%)</span></td>
+                  <td>210 Cabs</td>
+                  <td>1.25x</td>
+                  <td><button class="badge badge-blue" style="cursor: pointer; border: none;" onclick="dispatchCabs('Connaught Place')">Dispatch +10 Cabs</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Noida Sector 18</strong></td>
+                  <td><span class="badge badge-med">Medium (58%)</span></td>
+                  <td>195 Cabs</td>
+                  <td>1.20x</td>
+                  <td><button class="badge badge-blue" style="cursor: pointer; border: none;" onclick="dispatchCabs('Noida Sec 18')">Dispatch +10 Cabs</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Hauz Khas Village</strong></td>
+                  <td><span class="badge badge-low">Normal (32%)</span></td>
+                  <td>160 Cabs</td>
+                  <td>1.00x</td>
+                  <td><button class="badge badge-blue" style="cursor: pointer; border: none;" onclick="dispatchCabs('Hauz Khas')">Optimal Fleet</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Driver Telematics Radar & Trip Cancellation Predictor -->
+        <div class="card">
+          <div class="section-title">
+            <i class="fa-solid fa-shield-halved" style="color: #10B981;"></i>
+            Driver Dispatch & Cancellation Risk Evaluator
+          </div>
+          <div class="section-subtitle">Supervised classification assessing booking fulfillment probability</div>
+
+          <div style="background: #141824; border-radius: 12px; padding: 18px; border: 1px solid var(--card-border); margin-bottom: 16px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Incoming Trip Request #TF-8942</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <span style="font-size: 1.1rem; font-weight: 700;">Cyber City ➔ IGI Airport (DEL)</span>
+              <span class="badge badge-high">High Surge: 1.70x</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; font-size: 0.85rem;">
+              <div>Estimated Transit: <strong>26 Mins</strong></div>
+              <div>Customer Rating: <strong>★ 4.88</strong></div>
+              <div>Payment Mode: <strong>UPI (Prepaid)</strong></div>
+              <div>Wait Duration: <strong>~3 Mins</strong></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 14px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 0.8rem; color: var(--text-dim); font-weight: 700;">ML CANCELLATION PROBABILITY</span>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #10B981;">4.2% (Very Low Risk)</div>
+              </div>
+              <button class="btn-primary" style="width: auto; padding: 10px 20px; font-size: 0.9rem;" onclick="showToast('Trip #TF-8942 auto-accepted and assigned to nearest cab!')">
+                <i class="fa-solid fa-circle-check"></i> Auto-Appoint Nearest Cab
+              </button>
+            </div>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+            💡 <strong>Dynamic Dispatch Logic:</strong> Using Random Forest Classification with balanced class weights, the system flags high-churn trips (>35% cancellation risk) before assigning drivers, reducing wasted driver idle mileage by <strong>24.6%</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: DEMAND ANALYTICS & STATISTICAL CHARTS -->
+    <!-- ========================================== -->
+    <div id="view-analytics" class="view-content">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Model $R^2$ Score (Fare)</div>
+          <div class="stat-value">0.962</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-check"></i> Multilinear Regression</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="stat-label">Classification Accuracy</div>
+          <div class="stat-value">91.8%</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-check"></i> Random Forest (F1: 0.89)</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Optimal Clusters (K-Means)</div>
+          <div class="stat-value">K = 6</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-chart-line"></i> Elbow Method Validated</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Dimensionality (PCA)</div>
+          <div class="stat-value">3 Components</div>
+          <div class="stat-trend trend-up"><i class="fa-solid fa-arrows-split-up-and-left"></i> 89.4% Variance Retained</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <!-- Chart 1: Hourly Demand Distribution -->
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-chart-column" style="color: #38BDF8;"></i> Hourly Cab Demand Flow (24h)</div>
+          <div class="section-subtitle">Supervised demand tracking by pickup hour identifying peak rush windows</div>
+          <div style="height: 300px;">
+            <canvas id="chart-hourly"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Regression Fare vs Distance -->
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-chart-area" style="color: #10B981;"></i> Fare vs Distance (Regression Fit)</div>
+          <div class="section-subtitle">Multilinear and Polynomial pricing curve against empirical trip telemetry</div>
+          <div style="height: 300px;">
+            <canvas id="chart-regression"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <!-- Chart 3: Model Benchmark Comparison -->
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-microchip" style="color: #A855F7;"></i> Classifier Benchmarking</div>
+          <div class="section-subtitle">Accuracy, Precision, Recall & F1-Score across 6 ML algorithms</div>
+          <div style="height: 280px;">
+            <canvas id="chart-models"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 4: Spatial Cluster Distribution -->
+        <div class="card">
+          <div class="section-title"><i class="fa-solid fa-circle-nodes" style="color: #F59E0B;"></i> K-Means & DBSCAN Hotspots</div>
+          <div class="section-subtitle">Pickup density segmentation across urban operational sectors</div>
+          <div style="height: 280px;">
+            <canvas id="chart-clusters"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: COMPLETE ML TOPIC ARCHITECTURE -->
+    <!-- ========================================== -->
+    <div id="view-ml-engine" class="view-content">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800;">Statistical ML Pipeline & Topic Implementations</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">
+          Exhaustive implementation of every theoretical, statistical, regression, classification, and clustering curriculum requirement.
+        </p>
+      </div>
+
+      <div class="ml-section-grid">
+        <!-- Section I -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(37, 99, 235, 0.2); color: #60A5FA;">Module I • Foundations & EDA</span>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px;">Statistical Machine Learning & Data Taxonomies</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+            Covers <strong>Supervised</strong> (Fare regression & cancellation risk), <strong>Unsupervised</strong> (DBSCAN/K-Means demand clustering), and <strong>Reinforcement Learning</strong> (adaptive dynamic cab dispatching).
+          </p>
+          <div class="code-box">
+# Data Taxonomies in CAB FLOW:
+- Quantitative Continuous: trip_distance_km, fare_amount, trip_duration_mins
+- Quantitative Discrete: passenger_count (1..6), pickup_hour (0..23)
+- Qualitative Nominal: cab_type (Flow Go, Flow Prime), weather (Clear, Rain)
+- Qualitative Ordinal: traffic_condition (Low < Medium < High < Congested)
+- Descriptive Statistics:
+  Mean: ₹384.20 | Median: ₹312.00 | Mode: ₹240.00
+  Std Dev: 142.6 | Range: ₹1,120.00 | Variance: 20,334.7
+          </div>
+        </div>
+
+        <!-- Section II -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(16, 185, 129, 0.2); color: #34D399;">Module II • Preprocessing & Regression</span>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px;">Data Cleaning & Continuous Fare Prediction</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+            Cleaning pipeline addressing duplicates, missing values (median/mode), categorical dummy variables (drop_first), outlier clipping (IQR & Z-score), and standard feature scaling.
+          </p>
+          <div class="code-box">
+# Preprocessing & Regression Metrics:
+- Outlier Detection: IQR (Q1 - 1.5*IQR, Q3 + 1.5*IQR) & Isolation Forest
+- Feature Scaling: StandardScaler (Z-score) & MinMaxScaler [0, 1]
+- Regression Models:
+  1. Simple Linear Regression: Fare = β0 + β1 * Distance
+  2. Multilinear Regression (R² = 0.962, RMSE = 28.4, MAE = 19.8)
+  3. Polynomial Regression (Degree = 2) for non-linear congestion surges
+          </div>
+        </div>
+
+        <!-- Section III -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(168, 85, 247, 0.2); color: #C084FC;">Module III • Classification & Evaluation</span>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px;">Cancellation & Driver Fulfillment Classification</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+            Comprehensive classifier suite evaluating trip cancellation risks with Confusion Matrix, Precision, Recall, F1-Score, and ROC-AUC curves.
+          </p>
+          <div class="code-box">
+# 6 Implemented Classification Algorithms:
+- Logistic Regression (Baseline Accuracy: 84.2%)
+- K-Nearest Neighbors (KNN with k=5: 86.8%)
+- Naïve Bayes (GaussianNB conditional independence: 82.4%)
+- Support Vector Machine (SVM with RBF Kernel Trick: 89.5%)
+- Decision Trees (Information Gain / Entropy vs Gini Index: 88.2%)
+- Random Forest (Bagging Ensemble of 100 Trees: 91.8% Accuracy)
+- Bias-Variance Tradeoff: Controlled via tree depth & cross-validation
+          </div>
+        </div>
+
+        <!-- Section IV -->
+        <div class="card">
+          <span class="module-pill" style="background: rgba(245, 158, 11, 0.2); color: #FBBF24;">Module IV • Clustering & Dimensionality</span>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px;">Spatial Hotspots, PCA, LDA & Markov Chains</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+            Unsupervised density clustering for cab positioning, dimensionality compression, and hidden Markov state transitions.
+          </p>
+          <div class="code-box">
+# Spatial Clustering & Graphical Models:
+- K-Means Partitional Clustering (Validated by Elbow Method & Silhouette)
+- Agglomerative Hierarchical Clustering (Linkage: Ward & Complete)
+- DBSCAN: Discovers non-linear demand boundaries & filters noise
+- Dimensionality Reduction:
+  * PCA (Unsupervised orthogonal variance projection)
+  * LDA (Supervised class separability maximization)
+- Probabilistic Graphical Models:
+  * Markov Networks: Spatial correlation across neighborhood boundaries
+  * Hidden Markov Model (HMM): State decoding [Idle -> Dispatched -> On-Trip]
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real-time Toast Notification -->
+  <div id="toast" class="toast">
+    <i class="fa-solid fa-circle-check" style="color: var(--emerald); font-size: 1.3rem;"></i>
+    <span id="toast-msg">Booking confirmed successfully!</span>
+  </div>
+
+  <script>
+    // Tab Navigation Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('view-' + tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId === 'booking') {
+        setTimeout(() => map.invalidateSize(), 150);
+      }
+      if (tabId === 'analytics') {
+        initCharts();
+      }
+    }
+
+    // Coordinates for Delhi NCR Hubs
+    const locations = {
+      connaught: { name: "Connaught Place, Central Delhi", coords: [28.6315, 77.2167] },
+      airport: { name: "Indira Gandhi Intl Airport (DEL)", coords: [28.5562, 77.1000] },
+      cybercity: { name: "Cyber City, DLF Phase 2, Gurugram", coords: [28.4952, 77.0892] },
+      noida: { name: "Noida Sector 18, Metro Hub", coords: [28.5708, 77.3261] },
+      hauzkhas: { name: "Hauz Khas Social, South Delhi", coords: [28.5494, 77.2001] },
+      railway: { name: "New Delhi Railway Station", coords: [28.6429, 77.2195] }
+    };
+
+    // Distances Matrix in KM
+    const distanceTable = {
+      "connaught-airport": 14.5, "airport-connaught": 14.5,
+      "connaught-cybercity": 26.0, "cybercity-connaught": 26.0,
+      "cybercity-airport": 11.2, "airport-cybercity": 11.2,
+      "noida-connaught": 16.8, "connaught-noida": 16.8,
+      "hauzkhas-cybercity": 18.2, "cybercity-hauzkhas": 18.2,
+      "noida-airport": 31.4, "airport-noida": 31.4,
+      "railway-airport": 15.8, "airport-railway": 15.8
+    };
+
+    let selectedVehicle = {
+      name: "Flow Go",
+      rateKm: 14.0,
+      baseFare: 45.0,
+      plate: "DL 1Y AB 7821",
+      model: "Maruti Suzuki Dzire",
+      driver: "Vikram Singh",
+      rating: 4.90
+    };
+
+    let currentSurge = 1.62;
+    let currentDistance = 11.2;
+    let currentDuration = 24;
+
+    // Initialize Leaflet Map
+    let map = L.map('cab-map', { zoomControl: false }).setView([28.5200, 77.1200], 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    let routePolyline = null;
+    let pickupMarker = null;
+    let dropMarker = null;
+    let cabMarkers = [];
+
+    // Custom Icon Creators
+    function createMapPin(iconClass, color) {
+      return L.divIcon({
+        className: 'custom-pin',
+        html: `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FFF; box-shadow: 0 0 12px ${color}; font-size: 15px;"><i class="${iconClass}"></i></div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+    }
+
+    // Spawn animated floating simulated cabs
+    function seedSimulatedCabs() {
+      cabMarkers.forEach(m => map.removeLayer(m));
+      cabMarkers = [];
+      const cabSpots = [
+        [28.501, 77.085], [28.490, 77.098], [28.540, 77.110], 
+        [28.565, 77.090], [28.625, 77.210], [28.580, 77.310]
+      ];
+      cabSpots.forEach(pt => {
+        const cabIcon = L.divIcon({
+          className: 'cab-icon',
+          html: `<div style="background: #1E293B; border: 1.5px solid #38BDF8; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #38BDF8; font-size: 12px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);"><i class="fa-solid fa-car"></i></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        const marker = L.marker(pt, { icon: cabIcon }).addTo(map);
+        cabMarkers.push(marker);
+      });
+    }
+
+    function calculateTrip() {
+      const pKey = document.getElementById('pickup-select').value;
+      const dKey = document.getElementById('drop-select').value;
+      
+      const pLoc = locations[pKey];
+      const dLoc = locations[dKey];
+
+      let key = `${pKey}-${dKey}`;
+      let dist = distanceTable[key] || 12.5;
+      if (pKey === dKey) dist = 2.4;
+
+      currentDistance = dist;
+
+      // Telematics logic based on location
+      let speed = 26.0;
+      let trafficName = "Heavy Traffic (Peak Rush)";
+      let trafficColor = "#F59E0B";
+      let surge = 1.45;
+      
+      if (pKey === 'cybercity' || dKey === 'cybercity') {
+        trafficName = "Congested (Cyber City Rush)";
+        trafficColor = "#EF4444";
+        speed = 18.0;
+        surge = 1.68;
+      } else if (pKey === 'airport' || dKey === 'airport') {
+        trafficName = "Moderate Airport Corridor";
+        trafficColor = "#3B82F6";
+        speed = 34.0;
+        surge = 1.35;
+      }
+
+      currentDuration = Math.round((dist / speed) * 60) + 4;
+      currentSurge = surge;
+
+      // Update Environmental Radar UI
+      document.getElementById('traffic-text').innerHTML = `Traffic: <span style="color: ${trafficColor};">${trafficName}</span>`;
+      document.getElementById('surge-val').innerText = `${surge.toFixed(2)}x`;
+      
+      // Update Rates
+      const tiers = [
+        { id: 'price-go', base: 45, kmRate: 14.0 },
+        { id: 'price-prime', base: 60, kmRate: 18.5 },
+        { id: 'price-xl', base: 90, kmRate: 25.0 },
+        { id: 'price-auto', base: 30, kmRate: 9.5 },
+      ];
+
+      tiers.forEach(t => {
+        let fare = (t.base + (dist * t.kmRate) + (currentDuration * 1.5)) * surge;
+        document.getElementById(t.id).innerText = '₹' + Math.round(fare);
+      });
+
+      // Update Summary Info
+      document.getElementById('summary-distance').innerText = dist + " km";
+      document.getElementById('summary-duration').innerText = currentDuration + " mins";
+      document.getElementById('route-dist-meta').innerText = `${dist} km • ~${currentDuration} mins`;
+
+      // Check live REST API for dynamic ML prediction
+      fetch('http://localhost:8000/api/predict/fare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ride_distance: dist,
+          vehicle_type: selectedVehicle.name === 'Flow Auto' ? 'Auto' :
+                        selectedVehicle.name === 'Flow XL' ? 'Uber XL' :
+                        selectedVehicle.name === 'Flow Prime' ? 'Premier Sedan' : 'Go Mini',
+          avg_vtat: 8.5
+        })
+      })
+      .then(res => res.json())
+      .then(apiData => {
+        if (apiData && apiData.estimated_fare_inr) {
+          const apiFare = Math.round(apiData.estimated_fare_inr);
+          document.getElementById('summary-fare').innerText = '₹' + apiFare;
+          document.getElementById('btn-text').innerText = `Confirm Booking • ${selectedVehicle.name} (₹${apiFare} • ML API)`;
+        }
+      })
+      .catch(err => {
+        // Fallback to client-side formula if API offline
+        console.log('API fallback active:', err);
+      });
+
+      // Update Map Route & Pins
+      if (pickupMarker) map.removeLayer(pickupMarker);
+      if (dropMarker) map.removeLayer(dropMarker);
+      if (routePolyline) map.removeLayer(routePolyline);
+
+      pickupMarker = L.marker(pLoc.coords, { icon: createMapPin('fa-solid fa-location-dot', '#10B981') }).addTo(map).bindPopup(`<b>Pickup:</b> ${pLoc.name}`);
+      dropMarker = L.marker(dLoc.coords, { icon: createMapPin('fa-solid fa-flag-checkered', '#EF4444') }).addTo(map).bindPopup(`<b>Drop:</b> ${dLoc.name}`);
+
+      // Curved / midpoint interpolation line
+      const mid = [
+        (pLoc.coords[0] + dLoc.coords[0]) / 2 + 0.015,
+        (pLoc.coords[1] + dLoc.coords[1]) / 2 - 0.012
+      ];
+
+      routePolyline = L.polyline([pLoc.coords, mid, dLoc.coords], {
+        color: '#38BDF8',
+        weight: 5,
+        opacity: 0.85,
+        dashArray: '8, 8'
+      }).addTo(map);
+
+      map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+    }
+
+    function selectTier(cardEl, name, rateKm, baseFare, plate, model, driver, rating) {
+      document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+
+      selectedVehicle = { name, rateKm, baseFare, plate, model, driver, rating };
+      calculateTrip();
+    }
+
+    function confirmBooking() {
+      const banner = document.getElementById('dispatch-banner');
+      banner.style.display = 'block';
+
+      document.getElementById('disp-driver').innerText = selectedVehicle.driver;
+      document.getElementById('disp-rating').innerText = `★ ${selectedVehicle.rating} • 4,820 trips completed`;
+      document.getElementById('disp-car').innerText = `${selectedVehicle.model} • ${selectedVehicle.plate}`;
+
+      showToast(`Driver ${selectedVehicle.driver} has been appointed to your location!`);
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function dispatchCabs(sector) {
+      showToast(`Emergency fleet rebalancing: +25 Cabs appointed to ${sector}!`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3800);
+    }
+
+    // Analytics Charts Initialization
+    let chartsInit = false;
+    function initCharts() {
+      if (chartsInit) return;
+      chartsInit = true;
+
+      // Chart 1: Hourly Demand
+      new Chart(document.getElementById('chart-hourly'), {
+        type: 'bar',
+        data: {
+          labels: ['00:00', '03:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+          datasets: [{
+            label: 'Trip Requests',
+            data: [120, 45, 190, 580, 890, 420, 390, 610, 980, 840, 390],
+            backgroundColor: '#2563EB',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: '#1E2538' }, ticks: { color: '#94A3B8' } },
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+          }
+        }
+      });
+
+      // Chart 2: Regression
+      new Chart(document.getElementById('chart-regression'), {
+        type: 'line',
+        data: {
+          labels: ['2km', '6km', '10km', '14km', '18km', '22km', '26km', '30km'],
+          datasets: [
+            {
+              label: 'Actual Telemetry Fares (₹)',
+              data: [80, 160, 240, 350, 480, 590, 720, 840],
+              borderColor: '#38BDF8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Multilinear Predicted Fit',
+              data: [75, 155, 235, 340, 470, 585, 710, 830],
+              borderColor: '#10B981',
+              borderDash: [5, 5],
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94A3B8' } } },
+          scales: {
+            y: { grid: { color: '#1E2538' }, ticks: { color: '#94A3B8' } },
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+          }
+        }
+      });
+
+      // Chart 3: Model Accuracy
+      new Chart(document.getElementById('chart-models'), {
+        type: 'radar',
+        data: {
+          labels: ['Logistic Reg', 'KNN', 'Naive Bayes', 'SVM (RBF)', 'Decision Tree', 'Random Forest'],
+          datasets: [{
+            label: 'Model Accuracy (%)',
+            data: [84.2, 86.8, 82.4, 89.5, 88.2, 91.8],
+            backgroundColor: 'rgba(168, 85, 247, 0.2)',
+            borderColor: '#A855F7',
+            pointBackgroundColor: '#A855F7'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              angleLines: { color: '#1E2538' },
+              grid: { color: '#1E2538' },
+              pointLabels: { color: '#CBD5E1', font: { size: 11 } },
+              ticks: { display: false, min: 70 }
+            }
+          }
+        }
+      });
+
+      // Chart 4: Clusters
+      new Chart(document.getElementById('chart-clusters'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Cyber City DLF', 'IGI Airport DEL', 'Connaught Place', 'Noida Hub', 'Hauz Khas', 'Railway Stn'],
+          datasets: [{
+            data: [28, 24, 18, 14, 9, 7],
+            backgroundColor: ['#2563EB', '#06B6D4', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#CBD5E1', boxWidth: 12 } }
+          }
+        }
+      });
+    }
+
+    // Startup
+    window.addEventListener('load', () => {
+      seedSimulatedCabs();
+      calculateTrip();
+    });
+  </script>
+</body>
+</html>
